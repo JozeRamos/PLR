@@ -31,7 +31,7 @@ update_colors(Maze, Colors, Position):-
         ColorValue =:= 0 -> true;
         ColorPosition is ColorValue - 1,
         element(ColorPosition, Colors, ColorCount),
-        NewColorCount is ColorCount + 1,
+        NewColorCount is ColorCount + 1
     ).
 
 adjacent_positions(Position, N, Adjacent):-
