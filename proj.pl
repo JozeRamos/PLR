@@ -7,31 +7,37 @@ color_mazes(Maze, N):-
     all_equal(Colors),
     fill(Colors, 0, NumColors),
     MazeSize is N * N,
-    length(Path, MazeSize),
-    Start is N * (N - 1),
-    Finish is N - 1,
+    Path = [],
+    Start #= N * (N - 1),
+    Finish #= N - 1,
     find_path(Maze, Colors, Start, Finish, Path, N).
 
 fill([], _, 0).
 fill([X|Xs], X, N) :- N > 0, N0 is N - 1,fill(Xs, X, N0).
 
-find_path(_, _, Finish, Finish, _).
-find_path(Maze, Colors, Position, Finish, [H|T], N) :-
-    H is Position,
-    update_colors(Maze, Colors, Position).
-    % adjacent_positions(Position, N, AdjacentList),
-    % findall(X, (
-    %     member(X, AdjacentList), 
-    %     find_path(Maze, Colors, X, Finish, T, N)
-    %     ), PathsList).
-    
-update_colors(Maze, Colors, Position):-
-    element(Position, Maze, ColorValue),
+find_path(_, _, _, F, P, _) :- last(P, F).
+find_path(Maze, Colors, Position, Finish, Path, N) :-
+    \+ member(Position, Path),  % Ensure Position is not already in the path
+    append(Path, [Position], P), % Add Position to the path
+    update_colors(Maze, Colors, Position, NewColors), % Update the colors
+    adjacent_positions(Position, N, AdjacentList),  % Get the adjacent positions
+    findall(X, (
+        member(X, AdjacentList),
+        find_path(Maze, NewColors, X, Finish, P, N)
+        ), PathsList). % Recursively call find_path for each adjacent position
+
+replace(I, L, E, K) :-
+  nth0(I, L, _, R),
+  nth0(I, K, E, R).
+
+update_colors(Maze, Colors, Position, NewColors):-
+    nth0(Position, Maze, ColorValue),
     (
-        ColorValue =:= 0 -> true;
+        ColorValue =:= 0 -> NewColors = Colors;
         ColorPosition is ColorValue - 1,
-        element(ColorPosition, Colors, ColorCount),
-        NewColorCount is ColorCount + 1
+        nth0(ColorPosition, Colors, ColorCount),
+        NewColorCount is ColorCount + 1,
+        replace(ColorPosition, Colors, NewColorCount, NewColors)
     ).
 
 adjacent_positions(Position, N, Adjacent):-
