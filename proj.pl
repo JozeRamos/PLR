@@ -10,54 +10,27 @@
 %     Finish is N - 1,
 %     find_path(Maze, Colors, Start, Finish, Path, N),
 %     labeling([], Path).
-    
+
 % find_path(_, _, Finish, Finish, _).
 % find_path(Maze, Colors, Position, Finish, Path, N) :-
 %     adjacent_positions(Position, N, AdjacentList).
-    
-    
 
-adjacent_positions(Position, N, AdjacentList):-
-    length(AdjacentList, 4),
-    validate_position_up(Position, A, N),
-    validate_position_right(Position, B, N),
-    validate_position_down(Position, C, N),
-    validate_position_left(Position, D, N),
-    AdjacentList = [A, B, C, D].
 
-validate_position_up(Position, -1, N):-
-    Position #< N.
-validate_position_up(Position, Adjacent, N):-
-    Position #>= N,
-    Adjacent is Position - N.
-    
-validate_position_down(Position, -1, N):-
-    N1 is N - 1,
-    N2 is N * N1 - 1,
-    Position #> N2.
-validate_position_down(Position, Adjacent, N):-
-    N1 is N - 1,
-    N2 is N * N1 - 1,
-    Position #=< N2,
-    Adjacent is Position + N.
+adjacent_positions(Position, N, Adjacent):-
+    Up is Position - N,
+    Down is Position + N,
+    Left is Position - 1,
+    Right is Position + 1,
+    All = [Up, Down, Left, Right],
+    findall(X, (member(X, All), is_valid_position(X, Position, N)), Adjacent).
 
-validate_position_left(Position, -1, N):-
-    PositionMod is Position mod N,
-    PositionMod #= 0.
-validate_position_left(Position, Adjacent, N):-
-    PositionMod is Position mod N,
-    PositionMod #\= 0,
-    Adjacent is Position - 1.
-
-validate_position_right(Position, -1, N):-
-    PositionMod is Position mod N,
-    N1 is N - 1,
-    PositionMod #= N1.
-validate_position_right(Position, Adjacent, N):-
-    PositionMod is Position mod N,
-    N1 is N - 1,
-    PositionMod #\= N1,
-    Adjacent is Position + 1.
+is_valid_position(X, P, N):-
+    X >= 0,
+    X < N * N,
+    X_Mod is X mod N,
+    P_Mod is P mod N,
+    Diff is abs(X_Mod - P_Mod),
+    Diff #< 2.
 
 %     X-N > 0
 % X-1  X  X+1
