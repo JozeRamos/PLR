@@ -1,20 +1,38 @@
 :- use_module(library(clpfd)).
+:- use_module(library(lists)).
 
-% color_mazes(Maze, N):-
-%     maximum(NumColors, Maze),
-%     length(Colors, NumColors),
-%     all_equal(Colors),
-%     MazeSize is N * N,
-%     length(Path, MazeSize),
-%     Start is N * (N - 1),
-%     Finish is N - 1,
-%     find_path(Maze, Colors, Start, Finish, Path, N),
-%     labeling([], Path).
+color_mazes(Maze, N):-
+    maximum(NumColors, Maze),
+    length(Colors, NumColors),
+    all_equal(Colors),
+    fill(Colors, 0, NumColors),
+    MazeSize is N * N,
+    length(Path, MazeSize),
+    Start is N * (N - 1),
+    Finish is N - 1,
+    find_path(Maze, Colors, Start, Finish, Path, N).
 
-% find_path(_, _, Finish, Finish, _).
-% find_path(Maze, Colors, Position, Finish, Path, N) :-
-%     adjacent_positions(Position, N, AdjacentList).
+fill([], _, 0).
+fill([X|Xs], X, N) :- N > 0, N0 is N - 1,fill(Xs, X, N0).
 
+find_path(_, _, Finish, Finish, _).
+find_path(Maze, Colors, Position, Finish, [H|T], N) :-
+    H is Position,
+    update_colors(Maze, Colors, Position).
+    % adjacent_positions(Position, N, AdjacentList),
+    % findall(X, (
+    %     member(X, AdjacentList), 
+    %     find_path(Maze, Colors, X, Finish, T, N)
+    %     ), PathsList).
+    
+update_colors(Maze, Colors, Position):-
+    element(Position, Maze, ColorValue),
+    (
+        ColorValue =:= 0 -> true;
+        ColorPosition is ColorValue - 1,
+        element(ColorPosition, Colors, ColorCount),
+        NewColorCount is ColorCount + 1,
+    ).
 
 adjacent_positions(Position, N, Adjacent):-
     Up is Position - N,
