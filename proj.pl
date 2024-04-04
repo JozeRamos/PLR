@@ -15,7 +15,7 @@ color_mazes(Maze, N):-
 fill([], _, 0).
 fill([X|Xs], X, N) :- N > 0, N0 is N - 1,fill(Xs, X, N0).
 
-find_path(_, _, _, F, P, _) :- last(P, F).
+find_path(_, _, _, F, P, _) :- last(P, F), write(P), nl.
 find_path(Maze, Colors, Position, Finish, Path, N) :-
     \+ member(Position, Path),  % Ensure Position is not already in the path
     append(Path, [Position], P), % Add Position to the path
