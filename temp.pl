@@ -1,4 +1,5 @@
 :- use_module(library(clpfd)).
+:- use_module(library(lists)).
 
 solve_maze :-
     % Define the maze.
@@ -14,22 +15,21 @@ solve_maze :-
 
     % Model the Path
     length(Path, Size),
-    domain(Path, 1, Size),
     element(1, Path, Start),
-    length(Path, PathLength),
-    element(PathLength, Path, Finish),
+    element(Size, Path, Finish),
 
-    % TODO: Model Edges
-    % for each position, the domain is List
-    % adjacent(Start, N, List),
+    % Model edges
+    path_constraints(Path, Maze, N),
 
     % Ensure that the path represents a subcircuit.
-    subcircuit(Path), 
+    % !Removed because it breaks the code
+    % subcircuit(Path), 
 
     % TODO: Model Colors
-    maximum(NumColors, Maze),
-    length(Colors, NumColors),
-    all_equal(Colors),
+    % maximum(NumColors, Maze),
+    % length(Colors, NumColors),
+    % calculate_colors(Path, Maze, Colors),
+    % all_equal(Colors),
 
     % Find a solution.
     labeling([], Path),
@@ -38,45 +38,31 @@ solve_maze :-
     write(Path), nl.
 
 % ------------------------------------------------
+path_constraints([_], _, _).
+path_constraints([Current, Next | Rest], _, N) :-
+    Current #= N, Next #= Current,
+    path_constraints([Next | Rest], _, N).
 
-edge(Position, N, Value) :- % Up
-    Value is Position - N.
+path_constraints([Current, Next | Rest], Maze, N) :-
+    neighbor(Current, Next, Maze, N),
+    path_constraints([Next | Rest], Maze, N).
 
-edge(Position, N, Value) :- % Down
-    Value is Position + N.
-
-edge(Position, N, Value) :- % Left
-    Value is Position - 1,
-    Position mod N =\= 1.
-
-edge(Position, N, Value) :- % Right
-    Value is Position + 1,
-    Position mod N =\= 0.
-
-adjacent(Position, N, List) :-
-    append([Position], List, Adjacent),
+neighbor(Current, Next, Maze, N) :-
     Size is N * N,
-    Value in 1..Size,
-    findall(Value, edge(Position, N, Value), List).
+    domain([Current, Next], 1, Size),
+    Diff #= abs((Current-1) mod N - (Next-1) mod N),
+    Current #= Next + 1 #/\ Diff #= 1 #\/
+    Current #= Next - 1 #/\ Diff #= 1 #\/
+    Current #= Next + N #\/
+    Current #= Next - N .
 
-
-example_subcircuit :-
-    % Define a list of domain variables.
-    Succ = [S1, S2, S3, S4, S5],
-    Pred = [P1, P2, P3, P4, P5],
-
-    % Constrain the domain of the variables.
-    domain(Succ, 1, 5),
-    domain(Pred, 1, 5),
-
-    % Constrain the variables to form at most one Hamiltonian subcircuit.
-    subcircuit(Succ),
-    subcircuit(Succ, Pred),
-
-    % Find a solution.
-    labeling([], Succ),
-    labeling([], Pred),
-
-    % Print the solution.
-    write('Succ: '), write(Succ), nl,
-    write('Pred: '), write(Pred), nl.
+% ------------------------------------------------
+% TODO: Model Colors
+% calculate_colors([], _, _).
+% calculate_colors([Current | Rest], Maze, Colors) :-
+%     element(Current, Maze, ColorValue),
+%     ColorValue #= 0 #\/ 
+%     element(ColorValue, Colors, ColorCount),
+%     NewColorCount #= ColorCount + 1,
+%     element(ColorValue, Colors, NewColorCount),
+%     calculate_colors(Rest, Maze, Colors).
