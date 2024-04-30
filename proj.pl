@@ -2,84 +2,86 @@
 :- use_module(library(lists)).
 
 solve_maze :-
-    % Define the maze.
-    Maze = [1,2,2,0,2,3,3,3,1,2,2,2,0,0,1,2],
+  % Define the maze
+  Maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2],
+  % Ma = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
 
-    % Calculate Maze Size and Side Lenght
-    length(Maze, Size),
-    N is round(sqrt(Size)),
+  % Calculate Maze Size and Side Lenght
+  length(Maze, Size),
+  N is round(sqrt(Size)),
 
-    % Define the start and finish nodes.
-    Start is Size - N + 1,
-    Finish is N,
+  % Define the start and finish nodes
+  Start is Size - N + 1,
+  Finish is N,
 
-    % Model the Path
-    length(Path, Size),
-    domain(Path, 1, Size),
-    % element(Finish, Path, Start),
-    path_constraints(Path, Path, N),
+  % Model the Path
+  length(Path, Size),
+  domain(Path, 1, Size),
+  element(Finish, Path, Start),
 
-    % TODO: Model Colors
-    % maximum(NumColors, Maze),
-    % length(Colors, NumColors),
-    % calculate_colors(Path, Maze, Colors),
-    % all_equal(Colors),
+  % Constraints
+  maplist(path_constraints(Path, N), Path),
+  subcircuit(Path),
 
-    % Ensure that the path represents a subcircuit.
-    subcircuit(Path),
+  % Find a possible solution
+  labeling([], Path),
 
-    % Find a solution.
-    labeling([], Path),
+  % TODO Model the Colors
+  maximum(MaxColor, Maze),
 
-    % Print the solution.
-    % write('Path: '), write(Path), nl.
-    % write('Start: '), write(Start), nl,
-    % write('Finish: '), write(Finish), nl.
+  length(ColorCounts, MaxColor),
+  length(Colors, MaxColor),
+  
+  Upper is Size // MaxColor,
+  domain(ColorCounts, 1, Upper),
+  domain(Colors, 1, MaxColor),
+  
+  all_equal(ColorCounts),
+  all_distinct(Colors),
+  
+  % Validate Solution
+  % exclude(filter(Path), Path, FilteredPath),
+  % maplist(filter_maze(Maze), FilteredMaze, FilteredPath),
+  % maplist(count(FilteredMaze), Colors, ColorCounts),
 
-    print_path(Start, Path, Finish).
-    % fd_statistics.
+  write_path(Path, Maze, Start, Finish), nl,
+  % write (ColorCounts), nl,
+  % write (Colors), nl,
+  fail.
 
 % ------------------------------------------------
 % Path as a List Constraints
-path_constraints([], _, _).
-path_constraints([Current | Rest], Path, N) :-
-    element(Position, Path, Current),
-    neighbor(Position, Current, N),
-    path_constraints(Rest, Path, N).
+path_constraints(Path, N, Next) :-
+  element(Position, Path, Next),
+  neighbor(Position, Next, N).
 
 % Close the path
-neighbor(Finish, Start, N) :-
-    Finish #= N, Start #= N * N - (N - 1).
+neighbor(N, Start, N) :-
+  Start #= N * N - N + 1.
 
 % Check if two nodes are neighbors
 neighbor(Position, Neighbor, N) :-
-    Diff #= abs((Position-1) mod N - (Neighbor-1) mod N),
-    Position #= Neighbor - N #\/ % Up
-    % Position #= Neighbor + N #\/ % Down
-    Position #= Neighbor + N #/\ Position mod N #\= 0 #\/ % Down with optimization
-    Position #= Neighbor + 1 #/\ Diff #= 1 #\/ % Right
-    Position #= Neighbor - 1 #/\ Diff #= 1 #\/ % Left
-    Position #= Neighbor. % Self
+  Diff #= abs((Position-1) mod N - (Neighbor-1) mod N),
+  Position #= Neighbor - N #\/ % Up
+  Position #= Neighbor + N #/\ Position mod N #\= 0 #\/ % Down
+  Position #= Neighbor + 1 #/\ Diff #= 1 #\/ % Right
+  Position #= Neighbor - 1 #/\ Diff #= 1 #\/ % Left
+  Position #= Neighbor. % Self
 
 % ------------------------------------------------
-% TODO Model Colors
-% calculate_colors([], _, _).
-% calculate_colors([Current | Rest], Maze, Colors) :-
-%     element(Current, Maze, ColorValue),
-%     ColorValue #= 0 #\/
-%     element(ColorValue, Colors, ColorCount),
-%     NewColorCount #= ColorCount + 1,
-%     element(ColorValue, Colors, NewColorCount),
-%     calculate_colors(Rest, Maze, Colors).
+% Auxiliar Predicates
+filter(Path, Position) :-
+  element(Position, Path, Position).
 
-% ------------------------------------------------
-% TODO Print the path.
-print_path(Finish, _, Finish):- write(Finish), nl.
-print_path(Position, Path, Finish) :-
-    element(Position, Path, Next),
-    (
-        Position \= Finish ->
-        write(Position),
-        write(' -> ')
-    ),
-    print_path(Next, Path, Finish).
+filter_maze(Maze, FilteredMaze, Position) :-
+  element(Position, Maze, FilteredMaze).
+
+count(List, Value, Count) :-
+  aggregate_all(count, member(Value, List), Count).
+
+write_path(_, _, Finish, Finish) :- write(Finish), !.
+write_path(Path, Maze, Position, Finish) :-
+  element(Position, Maze, Color),
+  write(Position), write(' ('), write(Color), write(') -> '),
+  element(Position, Path, Next),
+  write_path(Path, Maze, Next, Finish).
