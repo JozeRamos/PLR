@@ -69,12 +69,11 @@ neighbor(Position, Neighbor, N) :-
 % ------------------------------------------------
 
 % Count the number of times a value appears in a list
-count_color_mazes(Maze):-
+count_color_mazes(Maze, Colors):-
     Maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2],
     maximum(NumColors, Maze),
     length(Colors, NumColors),
-    countAll(Maze, NumColors, Colors),
-    write(Colors).
+    countAll(Maze, NumColors, Colors).
 
 countAll(List, N, Colors) :-
     length(L, N),
