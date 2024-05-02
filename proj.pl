@@ -19,32 +19,30 @@ solve_maze :-
   domain(Path, 1, Size),
   element(Finish, Path, Start),
 
+  % TODO Model the Colors
+  maximum(MaxColor, Maze),
+  length(Colors, Size),
+  domain(Colors, 1, MaxColor),
+  
+  % length(ColorCounts, MaxColor),
+  % Upper is Size // MaxColor,
+  % domain(ColorCounts, 1, Upper),
+  % all_equal(ColorCounts),
+
   % Constraints
   maplist(path_constraints(Path, N), Path),
   subcircuit(Path),
 
   % Find a possible solution
   labeling([], Path),
-
-  % TODO Model the Colors
-  maximum(MaxColor, Maze),
-
-  length(ColorCounts, MaxColor),
-  length(Colors, MaxColor),
-  
-  Upper is Size // MaxColor,
-  domain(ColorCounts, 1, Upper),
-  domain(Colors, 1, MaxColor),
-  
-  all_equal(ColorCounts),
-  all_distinct(Colors),
   
   % Validate Solution
   % exclude(filter(Path), Path, FilteredPath),
   % maplist(filter_maze(Maze), FilteredMaze, FilteredPath),
   % maplist(count(FilteredMaze), Colors, ColorCounts),
 
-  write_path(Path, Maze, Start, Finish), nl,
+  write(Path), nl,
+  % write_path(Path, Maze, Start, Finish), nl,
   % write (ColorCounts), nl,
   % write (Colors), nl,
   fail.
@@ -63,10 +61,31 @@ neighbor(N, Start, N) :-
 neighbor(Position, Neighbor, N) :-
   Diff #= abs((Position-1) mod N - (Neighbor-1) mod N),
   Position #= Neighbor - N #\/ % Up
-  Position #= Neighbor + N #/\ Position mod N #\= 0 #\/ % Down
-  Position #= Neighbor + 1 #/\ Diff #= 1 #\/ % Right
-  Position #= Neighbor - 1 #/\ Diff #= 1 #\/ % Left
+  Position #= Neighbor + N #\/ % Down
+  (Position #= Neighbor + 1 #/\ Diff #= 1) #\/ % Right
+  (Position #= Neighbor - 1 #/\ Diff #= 1) #\/ % Left
   Position #= Neighbor. % Self
+
+% ------------------------------------------------
+
+% Count the number of times a value appears in a list
+count_color_mazes(Maze, Colors):-
+    Maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2],
+    maximum(NumColors, Maze),
+    length(Colors, NumColors),
+    countAll(Maze, NumColors, Colors).
+
+countAll(List, N, Colors) :-
+    length(L, N),
+    domain(L, 1, N),
+    all_distinct(L),
+    labeling([], L),
+    count_min(List, Colors, L), !.
+
+count_min(_, [], []).
+count_min(List, [H1|T1], [H|T]) :-
+    count(H, List, #=, H1),
+    count_min(List, T1, T).
 
 % ------------------------------------------------
 % Auxiliar Predicates
@@ -76,7 +95,8 @@ filter(Path, Position) :-
 filter_maze(Maze, FilteredMaze, Position) :-
   element(Position, Maze, FilteredMaze).
 
-count(List, Value, Count) :-
+% TODO findall of each value in the list, and length of the result to get the count
+count_(List, Value, Count) :-
   aggregate_all(count, member(Value, List), Count).
 
 write_path(_, _, Finish, Finish) :- write(Finish), !.
