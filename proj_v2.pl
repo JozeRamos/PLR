@@ -4,7 +4,7 @@
 color_mazes(Maze):-
 
     length(Maze, Size),
-    N is sqrt(Size)
+    N is sqrt(Size),
     Start is Size - N + 1,
     Finish is N,
     shortest_path(Start, Finish, LowerBound),
@@ -43,13 +43,21 @@ shortest_path(P, N, F):-
     shortest_path(P1, N, F1),
     F is F1 + 1.
 
-countAll(List, N, Min) :-
+
+% count maze colors
+count_color_mazes:-
+    Maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2],
+    maximum(NumColors, Maze),
+    length(Colors, NumColors),
+    countAll(Maze, NumColors, Colors),
+    write(Colors).
+
+countAll(List, N, Colors) :-
     length(L, N),
     domain(L, 1, N),
     all_distinct(L),
     labeling([], L),
-    count_min(List, Count, L),
-    minimum(Min,Count).
+    count_min(List, Colors, L), !.
 
 count_min(_, [], []).
 count_min(List, [H1|T1], [H|T]) :-
