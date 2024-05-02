@@ -19,6 +19,8 @@ solve_maze :-
   domain(Path, 1, Size),
   element(Finish, Path, Start),
 
+  % TODO Model the Colors
+  maximum(MaxColor, Maze),
   length(Colors, Size),
   domain(Colors, 1, MaxColor),
   
@@ -63,6 +65,28 @@ neighbor(Position, Neighbor, N) :-
   (Position #= Neighbor + 1 #/\ Diff #= 1) #\/ % Right
   (Position #= Neighbor - 1 #/\ Diff #= 1) #\/ % Left
   Position #= Neighbor. % Self
+
+% ------------------------------------------------
+
+% Count the number of times a value appears in a list
+count_color_mazes(Maze):-
+    Maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2],
+    maximum(NumColors, Maze),
+    length(Colors, NumColors),
+    countAll(Maze, NumColors, Colors),
+    write(Colors).
+
+countAll(List, N, Colors) :-
+    length(L, N),
+    domain(L, 1, N),
+    all_distinct(L),
+    labeling([], L),
+    count_min(List, Colors, L), !.
+
+count_min(_, [], []).
+count_min(List, [H1|T1], [H|T]) :-
+    count(H, List, #=, H1),
+    count_min(List, T1, T).
 
 % ------------------------------------------------
 % Auxiliar Predicates
