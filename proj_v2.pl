@@ -43,6 +43,26 @@ shortest_path(P, N, F):-
     shortest_path(P1, N, F1),
     F is F1 + 1.
 
+% color constraint
+
+color_constraint(NewMaze) :-
+    Maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2],
+    Path = [6,2,3,4,5,1,7,8,9,10,11,12,13,14,15,16],
+    length(Path, Size),
+    length(NewMaze, Size),
+    color_constraint_aux(Maze, Path, NewMaze, 1).
+
+color_constraint_aux(_, [], [], _).
+color_constraint_aux(Maze, [H|T], [H1|T1], N) :-
+    N #= H,
+    H1 is 0,
+    N1 is N + 1,
+    color_constraint_aux(Maze, T, T1, N1).    
+color_constraint_aux(Maze, [H|T], [H1|T1], N) :-
+    element(H, Maze, H1),
+    N1 is N + 1,
+    color_constraint_aux(Maze, T, T1, N1).
+
 
 % count maze colors
 count_color_mazes:-
