@@ -18,23 +18,19 @@ solve_maze :-
   length(Path, Size),
   domain(Path, 1, Size),
   element(Finish, Path, Start),
-
-  % Constraints
   subcircuit(Path),
   maplist(path_constraints(Path, N), Path),
 
   % Find a possible solution
   labeling([], Path),
 
-  % Maze with relevant colors
   length(NewMaze, Size),
+  % filter_maze(Path, Maze, NewMaze),
   color_constraint(Maze, Path, NewMaze, 1),
 
-  % Count colors
+  % Model the Colors
   maximum(NumColors, Maze),
-  length(Colors, NumColors),
-  countAll(NewMaze, NumColors, Colors),
-  all_equal(Colors),
+  count_colors(NewMaze, NumColors, _),
 
   write(Path), 
   nl, fail.
@@ -71,18 +67,19 @@ color_constraint(Maze, [H|T], [H1|T1], N) :-
   N1 #= N + 1,
   color_constraint(Maze, T, T1, N1).
 
-% count maze colors
-countAll(List, N, Colors) :-
-  length(L, N),
-  domain(L, 1, N),
-  all_distinct(L),
-  labeling([], L),
-  count_min(List, Colors, L), !.
+% filter_maze(Path, Maze, NewMaze).
+% filter_maze(Path, Maze, NewMaze) :-
+%   element(Position, Path, Next),
+%   element(Position, Maze, Color),
+%   element(Position, NewMaze, NewColor),
+%   Position #= Next #<=> Bool,
+%   if_then_else(Bool, 0, Color, NewColor).
 
-count_min(_, [], []).
-count_min(List, [H1|T1], [H|T]) :-
-  count(H, List, #=, H1),
-  count_min(List, T1, T).
+count_colors(_,0,_) :- !.
+count_colors(Maze,NumColors, K) :-
+    count(NumColors, Maze, #=, K),
+    NumColors1 is NumColors - 1,
+    count_colors(Maze,NumColors1,K).
 
 % ------------------------------------------------
 % write_path(_, _, Finish, Finish) :- write(Finish), !.
