@@ -18,21 +18,23 @@ solve_maze :-
   length(Path, Size),
   domain(Path, 1, Size),
   element(Finish, Path, Start),
+
   subcircuit(Path),
   maplist(path_constraints(Path, N), Path),
 
-  % Find a possible solution
-  labeling([], Path),
-
+  % Filter the Maze
   length(NewMaze, Size),
-  % filter_maze(Path, Maze, NewMaze),
-  color_constraint(Maze, Path, NewMaze, 1),
+  filter_maze(Path, Path, Maze, NewMaze),
 
   % Model the Colors
   maximum(NumColors, Maze),
   count_colors(NewMaze, NumColors, _),
+  
+  % Find a possible solution
+  labeling([], Path),
 
-  write(Path), 
+  % write(Path), 
+  write_path(Path, NewMaze, Start, Finish), 
   nl, fail.
 
 % ------------------------------------------------
@@ -43,7 +45,7 @@ path_constraints(Path, N, Next) :-
 
 % Close the path
 neighbor(N, Start, N) :-
-  Start #= N * N - N + 1.
+  Start #= N * N - N + 1, !.
 
 % Check if two nodes are neighbors
 neighbor(Position, Neighbor, N) :-
@@ -55,36 +57,29 @@ neighbor(Position, Neighbor, N) :-
   Position #= Neighbor. % Self
 
 % ------------------------------------------------
+% Removes unuseful colors from the maze
+filter_maze(_, [], _, _) :- !.
+filter_maze(Path, [H|T], Maze, NewMaze) :-
+  element(Position, Path, H),
+  element(Position, Maze, Color),
+  element(Position, NewMaze, NewColor),
+  Position #= H #<=> Bool,
+  if_then_else(Bool, 0, Color, NewColor),
+  filter_maze(Path, T, Maze, NewMaze).
 
-color_constraint(_, [], [], _).
-color_constraint(Maze, [H|T], [H1|T1], N) :-
-  N #= H,
-  H1 #= 0,
-  N1 #= N + 1,
-  color_constraint(Maze, T, T1, N1),!.    
-color_constraint(Maze, [H|T], [H1|T1], N) :-
-  element(H, Maze, H1),
-  N1 #= N + 1,
-  color_constraint(Maze, T, T1, N1).
-
-% filter_maze(Path, Maze, NewMaze).
-% filter_maze(Path, Maze, NewMaze) :-
-%   element(Position, Path, Next),
-%   element(Position, Maze, Color),
-%   element(Position, NewMaze, NewColor),
-%   Position #= Next #<=> Bool,
-%   if_then_else(Bool, 0, Color, NewColor).
-
+% Count the number of colors in the maze
+% and ensures they are the same amount (K)
 count_colors(_,0,_) :- !.
 count_colors(Maze,NumColors, K) :-
-    count(NumColors, Maze, #=, K),
-    NumColors1 is NumColors - 1,
-    count_colors(Maze,NumColors1,K).
+  count(NumColors, Maze, #=, K),
+  NumColors1 is NumColors - 1,
+  count_colors(Maze,NumColors1,K).
 
 % ------------------------------------------------
-% write_path(_, _, Finish, Finish) :- write(Finish), !.
-% write_path(Path, Maze, Position, Finish) :-
-%   element(Position, Maze, Color),
-%   write(Position), write(' ('), write(Color), write(') -> '),
-%   element(Position, Path, Next),
-%   write_path(Path, Maze, Next, Finish).
+% Write the path beautifully
+write_path(_, _, Finish, Finish) :- write(Finish), !.
+write_path(Path, Maze, Position, Finish) :-
+  element(Position, Maze, Color),
+  write(Position), write(' (C: '), write(Color), write(') -> '),
+  element(Position, Path, Next),
+  write_path(Path, Maze, Next, Finish).
