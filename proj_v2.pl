@@ -86,9 +86,13 @@ count_min(List, [H1|T1], [H|T]) :-
 
 
 count_c :-
-    Maze = [0,3,0,2,0,3,1,1,2],
-    maximum(NumColors, Maze),
-    count_c_aux(Maze,NumColors,_).
+    length(Maze, 8),
+    domain(Maze,0,3),
+    count(1,Maze,#=,2),
+    NumColors is 3,
+    count_c_aux(Maze,NumColors,_),
+    labeling([],Maze),
+    write(Maze),nl,fail.
 
 count_c_aux(_,0,_) :- !.
 count_c_aux(Maze,NumColors, K) :-
