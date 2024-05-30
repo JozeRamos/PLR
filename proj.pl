@@ -1,12 +1,12 @@
 :- use_module(library(clpfd)).
 :- use_module(library(lists)).
 
-solve_maze :-
+solve_maze(Maze) :-
   % Define the maze
   % Maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2],
   % Ma = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
 
-  Maze = [1,0,1,2,0,3,2,2,3,3,2,2,3,0,3,1,3,2,2,2,0,3,3,3,1],
+  % Maze = [1,0,1,2,0,3,2,2,3,3,2,2,3,0,3,1,3,2,2,2,0,3,3,3,1],
   % Path = [2,3,8,21,5,1,7,13,4,10,6,12,14,9,15,11,17,18,19,20,16,22,23,24,25],
   % 21 -> 16 -> 11 -> 6 -> 1 -> 2 -> 3 -> 8 -> 13 -> 14 -> 9 -> 4 -> 5
 
@@ -32,14 +32,14 @@ solve_maze :-
 
   % Model the Colors
   maximum(NumColors, Maze),
-  count_colors(NewMaze, NumColors, _),
+  count_colors(NewMaze, NumColors, _), !,
   
   % Find a possible solution
   labeling([], Path),
 
   % write(Path), 
   write_path(Path, NewMaze, Start, Finish), 
-  nl, fail.
+  nl, fd_statistics, !.
 
 % ------------------------------------------------
 % Path as a List Constraints
@@ -84,6 +84,32 @@ count_colors(Maze,NumColors, K) :-
 write_path(_, _, Finish, Finish) :- write(Finish), !.
 write_path(Path, Maze, Position, Finish) :-
   element(Position, Maze, Color),
-  write(Position), write(' (C: '), write(Color), write(') -> '),
+  write(Position), write(' -> '),
+  % write(' (C: '), write(Color), write(') -> '),  
   element(Position, Path, Next),
   write_path(Path, Maze, Next, Finish).
+
+% ------------------------------------------------
+% Examples
+solve_maze_1 :- solve_maze([1,2,2,0,2,3,3,3,1,2,2,2,0,0,1,2]).
+solve_maze_2 :- solve_maze([1,0,1,2,0,3,2,2,3,3,2,2,3,0,3,1,3,2,2,2,0,3,3,3,1]).
+
+% ------------------------------------------------
+% GENERATE MAZE
+% ------------------------------------------------
+% Generate a valid maze for a given size
+generate_maze(N, NumColors, Maze):-
+  Size is N * N,
+  length(Maze, Size),
+  domain(Maze, 0, NumColors),
+  
+  % Start and Finish must be 0
+  Start is Size - N + 1,
+  Finish is N,
+  element(Start, Maze, 0),
+  element(Finish, Maze, 0), !,
+
+  count(0, Maze, #=, ZeroCount),
+  labeling([minimize(ZeroCount)], Maze),
+  solve_maze(Maze),
+  write(Maze), nl, fail.
