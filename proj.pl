@@ -1,69 +1,115 @@
 :- use_module(library(clpfd)).
 :- use_module(library(lists)).
 
-color_mazes(Maze, N):-
-    maximum(NumColors, Maze),
-    length(Colors, NumColors),
-    all_equal(Colors),
-    fill(Colors, 0, NumColors),
-    MazeSize is N * N,
-    length(Path, MazeSize),
-    Start is N * (N - 1),
-    Finish is N - 1,
-    find_path(Maze, Colors, Start, Finish, Path, N).
+solve_maze(Maze) :-
+  % Define the maze
+  % Maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2],
+  % Ma = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
 
-fill([], _, 0).
-fill([X|Xs], X, N) :- N > 0, N0 is N - 1,fill(Xs, X, N0).
+  % Maze = [1,0,1,2,0,3,2,2,3,3,2,2,3,0,3,1,3,2,2,2,0,3,3,3,1],
+  % Path = [2,3,8,21,5,1,7,13,4,10,6,12,14,9,15,11,17,18,19,20,16,22,23,24,25],
+  % 21 -> 16 -> 11 -> 6 -> 1 -> 2 -> 3 -> 8 -> 13 -> 14 -> 9 -> 4 -> 5
 
-find_path(_, _, Finish, Finish, _).
-find_path(Maze, Colors, Position, Finish, [H|T], N) :-
-    H is Position,
-    update_colors(Maze, Colors, Position).
-    % adjacent_positions(Position, N, AdjacentList),
-    % findall(X, (
-    %     member(X, AdjacentList), 
-    %     find_path(Maze, Colors, X, Finish, T, N)
-    %     ), PathsList).
-    
-update_colors(Maze, Colors, Position):-
-    element(Position, Maze, ColorValue),
-    (
-        ColorValue =:= 0 -> true;
-        ColorPosition is ColorValue - 1,
-        element(ColorPosition, Colors, ColorCount),
-        NewColorCount is ColorCount + 1
-    ).
+  % Calculate Maze Size and Side Lenght
+  length(Maze, Size),
+  N is round(sqrt(Size)),
 
-adjacent_positions(Position, N, Adjacent):-
-    Up is Position - N,
-    Down is Position + N,
-    Left is Position - 1,
-    Right is Position + 1,
-    All = [Up, Down, Left, Right],
-    findall(X, (member(X, All), is_valid_position(X, Position, N)), Adjacent).
+  % Define the start and finish nodes
+  Start is Size - N + 1,
+  Finish is N,
 
-is_valid_position(X, P, N):-
-    X >= 0,
-    X < N * N,
-    X_Mod is X mod N,
-    P_Mod is P mod N,
-    Diff is abs(X_Mod - P_Mod),
-    Diff #< 2.
+  % Model the Path
+  length(Path, Size),
+  domain(Path, 1, Size),
+  element(Finish, Path, Start),
 
-%     X-N > 0
-% X-1  X  X+1
-%     X+N < N*N-1
+  subcircuit(Path),
+  maplist(path_constraints(Path, N), Path),
 
-% N = 4
-% X = 3
+  % Filter the Maze
+  length(NewMaze, Size),
+  filter_maze(Path, Path, Maze, NewMaze),
 
-% N mod N = 0
-% X mod N = 3
+  % Model the Colors
+  maximum(NumColors, Maze),
+  count_colors(NewMaze, NumColors, _), !,
+  
+  % Find a possible solution
+  labeling([], Path),
 
-% 2 verificações
+  % write(Path), 
+  write_path(Path, NewMaze, Start, Finish), 
+  nl, fd_statistics, !.
 
-% color_mazes([1,2,2,0,2,3,3,3,1,2,2,2,0,0,1,2],3).
-% 1,2,2,0,
-% 2,3,3,3,
-% 1,2,2,2,
-% 0,0,1,2
+% ------------------------------------------------
+% Path as a List Constraints
+path_constraints(Path, N, Next) :-
+  element(Position, Path, Next),
+  neighbor(Position, Next, N).
+
+% Close the path
+neighbor(N, Start, N) :-
+  Start #= N * N - N + 1, !.
+
+% Check if two nodes are neighbors
+neighbor(Position, Neighbor, N) :-
+  Diff #= abs((Position-1) mod N - (Neighbor-1) mod N),
+  Position #= Neighbor - N #\/ % Up
+  Position #= Neighbor + N #\/ % Down
+  (Position #= Neighbor + 1 #/\ Diff #= 1) #\/ % Right
+  (Position #= Neighbor - 1 #/\ Diff #= 1) #\/ % Left
+  Position #= Neighbor. % Self
+
+% ------------------------------------------------
+% Removes unuseful colors from the maze
+filter_maze(_, [], _, _) :- !.
+filter_maze(Path, [H|T], Maze, NewMaze) :-
+  element(Position, Path, H),
+  element(Position, Maze, Color),
+  element(Position, NewMaze, NewColor),
+  Position #= H #<=> Bool,
+  if_then_else(Bool, 0, Color, NewColor),
+  filter_maze(Path, T, Maze, NewMaze).
+
+% Count the number of colors in the maze
+% and ensures they are the same amount (K)
+count_colors(_,0,_) :- !.
+count_colors(Maze,NumColors, K) :-
+  count(NumColors, Maze, #=, K),
+  NumColors1 is NumColors - 1,
+  count_colors(Maze,NumColors1,K).
+
+% ------------------------------------------------
+% Write the path beautifully
+write_path(_, _, Finish, Finish) :- write(Finish), !.
+write_path(Path, Maze, Position, Finish) :-
+  element(Position, Maze, Color),
+  write(Position), write(' -> '),
+  % write(' (C: '), write(Color), write(') -> '),  
+  element(Position, Path, Next),
+  write_path(Path, Maze, Next, Finish).
+
+% ------------------------------------------------
+% Examples
+solve_maze_1 :- solve_maze([1,2,2,0,2,3,3,3,1,2,2,2,0,0,1,2]).
+solve_maze_2 :- solve_maze([1,0,1,2,0,3,2,2,3,3,2,2,3,0,3,1,3,2,2,2,0,3,3,3,1]).
+
+% ------------------------------------------------
+% GENERATE MAZE
+% ------------------------------------------------
+% Generate a valid maze for a given size
+generate_maze(N, NumColors, Maze):-
+  Size is N * N,
+  length(Maze, Size),
+  domain(Maze, 0, NumColors),
+  
+  % Start and Finish must be 0
+  Start is Size - N + 1,
+  Finish is N,
+  element(Start, Maze, 0),
+  element(Finish, Maze, 0), !,
+
+  count(0, Maze, #=, ZeroCount),
+  labeling([minimize(ZeroCount)], Maze),
+  solve_maze(Maze),
+  write(Maze), nl, fail.
