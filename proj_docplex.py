@@ -54,7 +54,7 @@ def solve_maze():
     mdl.add(count_colors[i-1] == mdl.count(new_maze, i))
 
   # Add a constraint that all elements in count_colors are the same
-  for i in range(1, len(count_colors)):
+  for i in range(1, max_number):
     mdl.add(count_colors[i] == count_colors[0])
 
   # Solve the model
