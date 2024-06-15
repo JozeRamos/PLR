@@ -107,11 +107,53 @@ generate_maze(N, NumColors, Maze):-
   Start is Size - N + 1,
   Finish is N,
   element(Start, Maze, 0),
-  element(Finish, Maze, 0), !,
+  element(Finish, Maze, 0),
 
   ZeroCount #= N + 2,
   count(0, Maze, #<, ZeroCount),
 
+  generate_count_colors(Maze, NumColors), !,
+
   labeling([], Maze),
-  solve_maze(Maze),
+  generate_solve_maze(Maze),
   write(Maze), nl, fail.
+
+generate_count_colors(_,0) :- !.
+generate_count_colors(Maze,NumColors) :-
+  count(NumColors, Maze, #>, 0),
+  NumColors1 #= NumColors - 1,
+  generate_count_colors(Maze,NumColors1).
+
+generate_solve_maze(Maze) :-
+
+  % Calculate Maze Size and Side Length
+  length(Maze, Size),
+  N is round(sqrt(Size)),
+
+  % Define the start and finish nodes
+  Start is Size - N + 1,
+  Finish is N,
+
+  % Model the Path
+  length(Path, Size),
+  domain(Path, 1, Size),
+  element(Finish, Path, Start),
+
+  subcircuit(Path),
+  maplist(path_constraints(Path, N), Path),
+
+  % Filter the Maze
+  length(NewMaze, Size),
+  filter_maze(Path, Path, Maze, NewMaze),
+
+  % Model the Colors
+  maximum(NumColors, Maze),
+  count_colors(NewMaze, NumColors, _), !,
+
+  % Find a possible solution
+  length(Solutions, 1),
+  findall(Path, labeling([], Path), Solutions),
+  % length(Solutions, NumSolutions),
+  % NumSolutions =:= 1.  
+  member(Path, Solutions),
+  write_path(Path, NewMaze, Start, Finish).
