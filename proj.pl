@@ -109,7 +109,9 @@ generate_maze(N, NumColors, Maze):-
   element(Start, Maze, 0),
   element(Finish, Maze, 0), !,
 
-  count(0, Maze, #=, ZeroCount),
-  labeling([minimize(ZeroCount)], Maze),
+  ZeroCount #= N + 2,
+  count(0, Maze, #<, ZeroCount),
+
+  labeling([], Maze),
   solve_maze(Maze),
   write(Maze), nl, fail.
