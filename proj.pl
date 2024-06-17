@@ -185,6 +185,7 @@ solve_all:-
 % ------------------------------------------------
 % Generate a valid maze for a given size
 generate_maze(N, NumColors, Maze):-
+  reset_timer,!,
   Size is N * N,
   length(Maze, Size),
   domain(Maze, 0, NumColors),
@@ -201,8 +202,7 @@ generate_maze(N, NumColors, Maze):-
   generate_count_colors(Maze, NumColors), !,
 
   labeling([], Maze),
-  generate_solve_maze(Maze),
-  write(Maze), nl, fail.
+  generate_solve_maze(Maze),nl,print_time('Time: '),fd_statistics.
 
 generate_count_colors(_,0) :- !.
 generate_count_colors(Maze,NumColors) :-
@@ -238,8 +238,6 @@ generate_solve_maze(Maze) :-
 
   % Find a possible solution
   length(Solutions, 1),
-  findall(Path, labeling([], Path), Solutions),
-  % length(Solutions, NumSolutions),
-  % NumSolutions =:= 1.
+  findall(Path, labeling([ffc, bisect, down], Path), Solutions),
   member(Path, Solutions),
   write_path(Path, NewMaze, Start, Finish).

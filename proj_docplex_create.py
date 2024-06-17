@@ -1,6 +1,8 @@
 from docplex.cp.model import CpoModel, CpoSolveResult
 
-def solve_maze():
+import time
+
+def solve_maze(maze):
   """
   Solves a maze using constraint programming and checks if there is only one solution.
 
@@ -10,9 +12,6 @@ def solve_maze():
   Returns:
       str: The solve status of the model and whether the solution is unique.
   """
-  # maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2]
-  maze = [1,0,1,2,0,3,2,2,3,3,2,2,3,0,3,1,3,2,2,2,0,3,3,3,1]
-  # Path = [1, 2, 7, 4, 20, 0, 6, 12, 3, 9, 5, 11, 13, 8, 14, 10, 16, 17, 18, 19, 15, 21, 22, 23, 24],
 
   # Create CPO model
   mdl = CpoModel('Maze Solver')
@@ -59,30 +58,82 @@ def solve_maze():
     mdl.add(count_colors[i] == count_colors[0])
 
   # Solve the model
-  solution: CpoSolveResult = mdl.solve()
+  solution: CpoSolveResult = mdl.solve(log_output=None)
 
   # Return the solve status
   if solution:
       initial_solution = [solution.get_value(path[i]) for i in range(size)]
-      print("Initial Solution:", initial_solution)
 
       # Add a constraint to exclude the initial solution
       mdl.add(mdl.sum([path[i] != initial_solution[i] for i in range(size)]) >= 1)
 
       # Solve again to check for uniqueness
-      new_solution = mdl.solve()
+      new_solution = mdl.solve(log_output=None)
       if new_solution:
-          print("Another Solution:", [new_solution.get_value(path[i]) for i in range(size)])
           return [0,initial_solution]
       else:
           return [1,initial_solution]
   else:
-      return "No solution found"
+      return [0,[]]
+
 
 
 if __name__ == "__main__":
-  [unique,sol] = solve_maze()
-  print("Unique Solution:",unique)
-  print("Initial Solution:",sol)
+  start_time = time.time()
+
+  N=3
+  NumColors=2
+
+  mdl = CpoModel()
+
+  # Create the maze
+  Size = N * N
+  Maze = mdl.integer_var_list(Size, 0, NumColors, "Maze")
+
+  # Start and Finish must be 0
+  Start = Size - N
+  Finish = N - 1
+  mdl.add(Maze[Start] == 0)
+  mdl.add(Maze[Finish] == 0)
+
+  # There must be less than N + 2 zeros in the maze
+  mdl.add(mdl.count(Maze, 0) < N + 2)
+
+  # Ensure that each color from NumColors to 1 appears at least once in the Maze
+  for color in range(NumColors, 0, -1):
+      mdl.add(mdl.count(Maze, color) >= 1)
+
+  found = 0
+
+  solutions = []
+
+  while True:
+      # Solve the model
+      solution: CpoSolveResult = mdl.solve(log_output=True)
+
+      # Check if a solution was found
+      if solution:
+          maze_solution = [solution.get_value(Maze[i]) for i in range(Size)]
+
+          found, sol = solve_maze(maze_solution)
+
+          # Add a constraint to exclude the current solution
+          mdl.add(mdl.sum([Maze[i] != maze_solution[i] for i in range(Size)]) >= 1)
+      else:
+          break  # No more solutions found
+      
+      if found:
+        end_time = time.time()
+        print(solution)
+        print("Execution time: ", end_time - start_time, "seconds")
+        found = 0
+        print("Maze: ", maze_solution)
+        print("Solution: ", sol)
+        user_input = input("Do you want to continue? (y/n): ")
+        if user_input.lower() != 'y':
+            break        
+        start_time = time.time()
+
+
 
 

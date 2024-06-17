@@ -1,4 +1,5 @@
 from docplex.cp.model import CpoModel
+import time
 
 def solve_maze():
   """
@@ -15,6 +16,7 @@ def solve_maze():
   # Path = [1, 2, 7, 4, 20, 0, 6, 12, 3, 9, 5, 11, 13, 8, 14, 10, 16, 17, 18, 19, 15, 21, 22, 23, 24],
   # Create CPO model
   mdl = CpoModel('Maze Solver')
+  start_time = time.time()
 
   # Define the maze
   max_number = max(maze)
@@ -61,8 +63,9 @@ def solve_maze():
   solution = mdl.solve()
 
   # Return the solve status
-  if solution:
-    # solution.print_solution()
+  if solution:    
+    end_time = time.time()
+    print("Execution time: ", end_time - start_time, "seconds")
     print([solution.get_value(path[i]) for i in range(size)])
     return solution.get_solve_status()
   else:
