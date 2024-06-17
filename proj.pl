@@ -2,6 +2,7 @@
 :- use_module(library(lists)).
 
 solve_maze(Maze) :-
+  reset_timer,
   % Define the maze
   % Maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2],
   % Ma = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
@@ -33,18 +34,21 @@ solve_maze(Maze) :-
   % Model the Colors
   maximum(NumColors, Maze),
   count_colors(NewMaze, NumColors, _), !,
-  
-  % Find a possible solution
-  labeling([], Path),
 
-  % write(Path), 
-  write_path(Path, NewMaze, Start, Finish), 
-  nl, fd_statistics, !.
+  % Find a possible solution
+  % labeling([max_regret, median], Path),
+  % labeling([ffc, bisect], Path),
+  labeling([ffc, bisect, down], Path),
+
+  write(Maze), nl,
+  write_path(Path, NewMaze, Start, Finish),
+  nl, print_time('Time: '), 
+  fd_statistics, !.
 
 % ------------------------------------------------
 % Path as a List Constraints
 path_constraints(Path, N, Next) :-
-  element(Position, Path, Next),
+  element(Position, Path, Next), !,
   neighbor(Position, Next, N).
 
 % Close the path
@@ -54,11 +58,11 @@ neighbor(N, Start, N) :-
 % Check if two nodes are neighbors
 neighbor(Position, Neighbor, N) :-
   Diff #= abs((Position-1) mod N - (Neighbor-1) mod N),
-  Position #= Neighbor - N #\/ % Up
-  Position #= Neighbor + N #\/ % Down
-  (Position #= Neighbor + 1 #/\ Diff #= 1) #\/ % Right
-  (Position #= Neighbor - 1 #/\ Diff #= 1) #\/ % Left
-  Position #= Neighbor. % Self
+  Neighbor #= Position - N #\/ % Up
+  (Neighbor #= Position + N #/\ Position mod N #> 1) #\/ % Down
+  (Neighbor #= Position + 1 #/\ Diff #= 1) #\/ % Right
+  (Neighbor #= Position - 1 #/\ Diff #= 1) #\/ % Left
+  Neighbor #= Position. % Self
 
 % ------------------------------------------------
 % Removes unuseful colors from the maze
@@ -67,7 +71,7 @@ filter_maze(Path, [H|T], Maze, NewMaze) :-
   element(Position, Path, H),
   element(Position, Maze, Color),
   element(Position, NewMaze, NewColor),
-  Position #= H #<=> Bool,
+  Position #= H #<=> Bool, !,
   if_then_else(Bool, 0, Color, NewColor),
   filter_maze(Path, T, Maze, NewMaze).
 
@@ -85,14 +89,96 @@ write_path(_, _, Finish, Finish) :- write(Finish), !.
 write_path(Path, Maze, Position, Finish) :-
   element(Position, Maze, Color),
   write(Position), write(' -> '),
-  % write(' (C: '), write(Color), write(') -> '),  
+  % write(' (C: '), write(Color), write(') -> '),
   element(Position, Path, Next),
   write_path(Path, Maze, Next, Finish).
 
 % ------------------------------------------------
+% Measure the time of the solution
+reset_timer:-
+  statistics(total_runtime, _).
+
+print_time(Msg):-
+  statistics(total_runtime,[_,T]),
+  TS is ((T//10)*10)/1000, nl,
+  write(Msg),
+  write(TS),
+  write('s'), nl.
+
+% ------------------------------------------------
 % Examples
-solve_maze_1 :- solve_maze([1,2,2,0,2,3,3,3,1,2,2,2,0,0,1,2]).
-solve_maze_2 :- solve_maze([1,0,1,2,0,3,2,2,3,3,2,2,3,0,3,1,3,2,2,2,0,3,3,3,1]).
+solve_maze :- solve_maze([1,2,2,0,2,3,3,3,1,2,2,2,0,0,1,2]).
+
+solve_maze_1:-
+  solve_maze([
+    1, 2, 1, 0,
+    2, 0, 1, 1,
+    1, 0, 1, 2,
+    0, 1, 1, 2
+  ]).
+
+solve_maze_2:-
+  solve_maze([
+    1, 1, 3, 0,
+    2, 3, 2, 3,
+    1, 3, 3, 1,
+    0, 3, 1, 2
+  ]).
+
+solve_maze_3:-
+  solve_maze([
+    1, 2, 1, 3, 0,
+    0, 3, 2, 3, 0,
+    3, 0, 0, 0, 2,
+    3, 3, 1, 3, 2,
+    0, 3, 3, 2, 1
+  ]).
+
+solve_maze_4:-
+  solve_maze([
+    3, 3, 1, 1, 0,
+    1, 1, 2, 2, 4,
+    3, 0, 0, 1, 4,
+    4, 1, 4, 1, 1,
+    0, 2, 2, 0, 3
+  ]).
+
+solve_maze_5:-
+solve_maze([
+    3, 5, 4, 3, 0,
+    2, 1, 1, 4, 1,
+    2, 5, 4, 0, 5,
+    4, 2, 5, 5, 2,
+    0, 4, 2, 5, 3
+  ]).
+
+solve_maze_6:-
+  solve_maze([
+    1, 3, 2, 6, 0,
+    6, 2, 4, 6, 5,
+    1, 6, 4, 3, 6,
+    5, 5, 2, 3, 4,
+    0, 0, 6, 5, 1
+  ]).
+
+solve_maze_7:-
+  solve_maze([
+    2, 3, 4, 1, 4, 0,
+    0, 3, 4, 1, 1, 1,
+    4, 1, 0, 1, 4, 4,
+    3, 2, 1, 3, 0, 1,
+    3, 4, 1, 1, 4, 2,
+    0, 4, 1, 2, 1, 0
+  ]).
+
+solve_all:-
+  solve_maze_1, nl,
+  solve_maze_2, nl,
+  solve_maze_3, nl,
+  solve_maze_4, nl,
+  solve_maze_5, nl,
+  solve_maze_6, nl,
+  solve_maze_7, nl.
 
 % ------------------------------------------------
 % GENERATE MAZE
@@ -102,7 +188,7 @@ generate_maze(N, NumColors, Maze):-
   Size is N * N,
   length(Maze, Size),
   domain(Maze, 0, NumColors),
-  
+
   % Start and Finish must be 0
   Start is Size - N + 1,
   Finish is N,
@@ -154,6 +240,6 @@ generate_solve_maze(Maze) :-
   length(Solutions, 1),
   findall(Path, labeling([], Path), Solutions),
   % length(Solutions, NumSolutions),
-  % NumSolutions =:= 1.  
+  % NumSolutions =:= 1.
   member(Path, Solutions),
   write_path(Path, NewMaze, Start, Finish).
