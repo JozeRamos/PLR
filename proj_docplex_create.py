@@ -62,7 +62,8 @@ def solve_maze():
 
   # Return the solve status
   if solution:
-    solution.print_solution()
+    # solution.print_solution()
+    print([solution.get_value(path[i]) for i in range(size)])
     return solution.get_solve_status()
   else:
     return "No solution found"
