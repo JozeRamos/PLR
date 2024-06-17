@@ -60,7 +60,7 @@ neighbor(Position, Neighbor, N) :-
   Diff #= abs((Position-1) mod N - (Neighbor-1) mod N),
   Mod #= Position mod N,
   Position #= Neighbor + N #\/ % Up
-  (Position #= Neighbor - N #/\ Mod #\= 0 #\/ Mod #\= 1) #\/ % Down
+  (Position #= Neighbor - N #/\ (Mod #\= 0 #\/ Mod #\= 1)) #\/ % Down
   (Position #= Neighbor + 1 #/\ Diff #= 1) #\/ % Right
   (Position #= Neighbor - 1 #/\ Diff #= 1) #\/ % Left
   Position #= Neighbor. % Self
