@@ -11,9 +11,14 @@ def solve_maze():
   Returns:
     str: The solve status of the model.
   """
-  # maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2]
-  maze = [1,0,1,2,0,3,2,2,3,3,2,2,3,0,3,1,3,2,2,2,0,3,3,3,1]
-  # Path = [1, 2, 7, 4, 20, 0, 6, 12, 3, 9, 5, 11, 13, 8, 14, 10, 16, 17, 18, 19, 15, 21, 22, 23, 24],
+  maze = [
+    2, 4, 3, 1, 3, 0,
+    0, 3, 4, 1, 1, 1,
+    4, 1, 0, 1, 4, 4,
+    3, 2, 1, 3, 0, 1,
+    3, 4, 1, 1, 4, 2,
+    0, 4, 1, 2, 1, 0
+  ]
   # Create CPO model
   mdl = CpoModel('Maze Solver')
   start_time = time.time()
@@ -67,6 +72,7 @@ def solve_maze():
     end_time = time.time()
     print("Execution time: ", end_time - start_time, "seconds")
     print([solution.get_value(path[i]) for i in range(size)])
+    
     return solution.get_solve_status()
   else:
     return "No solution found"
