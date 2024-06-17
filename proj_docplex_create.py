@@ -1,18 +1,19 @@
-from docplex.cp.model import CpoModel
+from docplex.cp.model import CpoModel, CpoSolveResult
 
 def solve_maze():
   """
-  Solves a maze using constraint programming.
+  Solves a maze using constraint programming and checks if there is only one solution.
 
   Args:
-    maze (list): List representing the maze.
+      maze (list): List representing the maze.
 
   Returns:
-    str: The solve status of the model.
+      str: The solve status of the model and whether the solution is unique.
   """
   # maze = [1,2,2,0,2,3,3,3,1,2, 2, 2, 0, 0, 1, 2]
   maze = [1,0,1,2,0,3,2,2,3,3,2,2,3,0,3,1,3,2,2,2,0,3,3,3,1]
   # Path = [1, 2, 7, 4, 20, 0, 6, 12, 3, 9, 5, 11, 13, 8, 14, 10, 16, 17, 18, 19, 15, 21, 22, 23, 24],
+
   # Create CPO model
   mdl = CpoModel('Maze Solver')
 
@@ -58,16 +59,30 @@ def solve_maze():
     mdl.add(count_colors[i] == count_colors[0])
 
   # Solve the model
-  solution = mdl.solve()
+  solution: CpoSolveResult = mdl.solve()
 
   # Return the solve status
   if solution:
-    # solution.print_solution()
-    print([solution.get_value(path[i]) for i in range(size)])
-    return solution.get_solve_status()
+      initial_solution = [solution.get_value(path[i]) for i in range(size)]
+      print("Initial Solution:", initial_solution)
+
+      # Add a constraint to exclude the initial solution
+      mdl.add(mdl.sum([path[i] != initial_solution[i] for i in range(size)]) >= 1)
+
+      # Solve again to check for uniqueness
+      new_solution = mdl.solve()
+      if new_solution:
+          print("Another Solution:", [new_solution.get_value(path[i]) for i in range(size)])
+          return [0,initial_solution]
+      else:
+          return [1,initial_solution]
   else:
-    return "No solution found"
+      return "No solution found"
 
 
 if __name__ == "__main__":
-    print(solve_maze())
+  [unique,sol] = solve_maze()
+  print("Unique Solution:",unique)
+  print("Initial Solution:",sol)
+
+
