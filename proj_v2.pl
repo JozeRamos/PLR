@@ -202,7 +202,7 @@ generate_maze(N, NumColors, Maze):-
   % Count the number of zeros
   domain([ZeroCount], 0, Size),
   ZeroCount #= N + 2,
-  count(0, Maze, #<, ZeroCount),
+  count(0, Maze, #<, ZeroCount), !,
 
   % Generate maze
   labeling([], Maze),
