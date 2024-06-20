@@ -36,7 +36,7 @@ def solve_maze(maze):
       N = finish + 1
       diff = (position) % N
       mdl.add((position == i - N) |  # Up
-          ((position == i + N) & (position // N > 1)) |  # Down
+          ((position == i + N) & (position % N > 1)) |  # Down
           ((position == i + 1) & (diff > 0)) |  # Right
           ((position == i - 1) & (diff < N - 1)) |  # Left
           (position == i))  # Self
@@ -75,15 +75,10 @@ def solve_maze(maze):
           return [1,initial_solution]
   else:
       return [0,[]]
+  
 
-
-
-if __name__ == "__main__":
+def create_maze(N, NumColors):  
   start_time = time.time()
-
-  N=3
-  NumColors=2
-
   mdl = CpoModel()
 
   # Create the maze
@@ -105,11 +100,9 @@ if __name__ == "__main__":
 
   found = 0
 
-  solutions = []
-
   while True:
       # Solve the model
-      solution: CpoSolveResult = mdl.solve(log_output=True)
+      solution: CpoSolveResult = mdl.solve(log_output=None)
 
       # Check if a solution was found
       if solution:
@@ -136,4 +129,17 @@ if __name__ == "__main__":
 
 
 
+if __name__ == "__main__":
+
+  while True:
+    N = input("Enter the size of the maze or 'q' to quit: ")
+    if N.lower() == 'q':
+      break
+    N = int(N)
+    
+    NumColors = input("Enter the number of colors or 'q' to quit: ")
+    if NumColors.lower() == 'q':
+      break
+    NumColors = int(NumColors)
+    create_maze(N, NumColors)
 

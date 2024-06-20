@@ -1,7 +1,7 @@
 from docplex.cp.model import CpoModel
 import time
 
-def solve_maze():
+def solve_maze(maze):
   """
   Solves a maze using constraint programming.
 
@@ -11,14 +11,7 @@ def solve_maze():
   Returns:
     str: The solve status of the model.
   """
-  maze = [
-    2, 4, 3, 1, 3, 0,
-    0, 3, 4, 1, 1, 1,
-    4, 1, 0, 1, 4, 4,
-    3, 2, 1, 3, 0, 1,
-    3, 4, 1, 1, 4, 2,
-    0, 4, 1, 2, 1, 0
-  ]
+
   # Create CPO model
   mdl = CpoModel('Maze Solver')
   start_time = time.time()
@@ -43,7 +36,7 @@ def solve_maze():
       N = finish + 1
       diff = (position) % N
       mdl.add((position == i - N) |  # Up
-          ((position == i + N) & (position // N > 1)) |  # Down
+          ((position == i + N) & (position % N > 1)) |  # Down
           ((position == i + 1) & (diff > 0)) |  # Right
           ((position == i - 1) & (diff < N - 1)) |  # Left
           (position == i))  # Self
@@ -65,7 +58,7 @@ def solve_maze():
     mdl.add(count_colors[i] == count_colors[0])
 
   # Solve the model
-  solution = mdl.solve()
+  solution = mdl.solve(log_output=None)
 
   # Return the solve status
   if solution:    
@@ -75,8 +68,74 @@ def solve_maze():
     
     return solution.get_solve_status()
   else:
-    return "No solution found"
+    print("No solution found")
+    return solution.get_solve_status()
 
 
 if __name__ == "__main__":
-    print(solve_maze())
+  puzzles = {
+    '1': [
+      1, 2, 1, 0,
+      2, 0, 1, 1,
+      1, 0, 1, 2,
+      0, 1, 1, 2
+    ],
+    '2': [
+      1, 1, 3, 0,
+      2, 3, 2, 3,
+      1, 3, 3, 1,
+      0, 3, 1, 2
+    ],
+    '3': [
+      1, 2, 1, 3, 0,
+      0, 3, 2, 3, 0,
+      3, 0, 0, 0, 2,
+      3, 3, 1, 3, 2,
+      0, 3, 3, 2, 1
+    ],
+    '4': [
+      3, 3, 1, 1, 0,
+      1, 1, 2, 2, 4,
+      3, 0, 0, 1, 4,
+      4, 1, 4, 1, 1,
+      0, 2, 2, 0, 3
+    ],
+    '5': [
+      3, 5, 4, 3, 0,
+      2, 1, 1, 4, 1,
+      2, 5, 4, 0, 5,
+      4, 2, 5, 5, 2,
+      0, 4, 2, 5, 3
+    ],
+    '6': [
+      1, 3, 2, 6, 0,
+      6, 2, 4, 6, 5,
+      1, 6, 4, 3, 6,
+      5, 5, 2, 3, 4,
+      0, 0, 6, 5, 1
+    ],
+    '7': [
+      2, 4, 3, 1, 3, 0,
+      0, 3, 4, 1, 1, 1,
+      4, 1, 0, 1, 4, 4,
+      3, 2, 1, 3, 0, 1,
+      3, 4, 1, 1, 4, 2,
+      0, 4, 1, 2, 1, 0
+    ]
+  }
+
+  while True:
+    puzzle_choice = input("Enter the puzzle number or 'q' to quit: ")
+    if puzzle_choice.lower() == 'q':
+      break
+    elif puzzle_choice in puzzles:
+      maze = puzzles[puzzle_choice]
+      print(f"Solving puzzle {puzzle_choice}...")
+      solve_maze(maze)
+    elif puzzle_choice == '8':
+      for i in range(1, 8):
+        maze = puzzles[str(i)]
+        print(f"Solving puzzle {i}...")
+        solve_maze(maze)
+    else:
+      print("Invalid choice. Please enter a valid puzzle number.")
