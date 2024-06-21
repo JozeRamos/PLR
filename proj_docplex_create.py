@@ -36,7 +36,7 @@ def solve_maze(maze):
       N = finish + 1
       diff = (position) % N
       mdl.add((position == i - N) |  # Up
-          ((position == i + N) & (position % N > 1)) |  # Down
+          ((position == i + N) & (position % N > 0)) |  # Down
           ((position == i + 1) & (diff > 0)) |  # Right
           ((position == i - 1) & (diff < N - 1)) |  # Left
           (position == i))  # Self
