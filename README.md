@@ -6,7 +6,7 @@
 2. Install python
 3. Install Docplex
 
-## Usage
+## Usage and Testing
 
 ### To run the python puzzle solver:
 
