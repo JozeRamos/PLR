@@ -196,9 +196,11 @@ generate_maze(N, NumColors, Maze):-
   element(Start, Maze, 0),
   element(Finish, Maze, 0),
 
+  % Number of 0s must be N + 2
   ZeroCount #= N + 2,
   count(0, Maze, #<, ZeroCount),
 
+  % There must be at least on of each color
   generate_count_colors(Maze, NumColors), !,
 
   labeling([], Maze),
