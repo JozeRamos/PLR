@@ -18,7 +18,7 @@ python .\proj_docplex_create.py
 
 ### To run the SICStus puzzle solver and maze creator:
 
-Consult proj.pl
+Consult proj_v2.pl
 
 ### For the solver:
 
